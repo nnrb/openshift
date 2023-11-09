@@ -1,0 +1,48 @@
+$ oc set probe deploy/long-load --readiness --open-tcp 3000
+
+$ oc set probe deploy/long-load --liveness --get-url=http://:8080/health
+
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8080
+            scheme: HTTP
+          periodSeconds: 3
+          successThreshold: 1
+          timeoutSeconds: 1
+
+$ oc set probe deploy/long-load --readiness -- cat /etc/hosts
+
+        readinessProbe:
+          exec:
+            command:
+            - cat
+            - /etc/hosts
+          failureThreshold: 1
+          periodSeconds: 3
+          successThreshold: 1
+          timeoutSeconds: 1
+
+[student@workstation DO180_practice]$ oc set resources deployment long-load --requests cpu=300m,memory=1Gi --limits cpu=500m,memory=2Gi
+deployment.apps/long-load resource requirements updated
+[student@workstation DO180_practice]$ oc get deploy long-load -o yaml | grep resources: -A 9
+        resources:
+          limits:
+            cpu: 500m
+            memory: 2Gi
+          requests:
+            cpu: 300m
+            memory: 1Gi
+
+$ oc describe node master01 | grep "Allocated resources:" -A8
+Allocated resources:
+  (Total limits may be over 100 percent, i.e., overcommitted.)
+  Resource           Requests       Limits
+  --------           --------       ------
+  cpu                3458m (46%)    1480m (19%)
+  memory             13691Mi (72%)  3298Mi (17%)
+  ephemeral-storage  0 (0%)         0 (0%)
+  hugepages-1Gi      0 (0%)         0 (0%)
+  hugepages-2Mi      0 (0%)         0 (0%)
+
